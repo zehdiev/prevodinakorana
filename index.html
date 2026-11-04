@@ -95,6 +95,7 @@ main { min-width: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); pa
 .tr p { font-family: var(--f-read); font-size: var(--tr-size); line-height: 1.65; margin: 0; max-width: 68ch }
 .tr .who { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--lapis); font-weight: 600; display: flex; gap: 8px; align-items: center }
 .tr .flag { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--gilt); border: 1px solid currentColor; border-radius: 999px; padding: 0 7px; font-size: 11px; cursor: help }
+.tr .gap { font-family: var(--f-ui); font-size: 14px; font-style: italic; color: var(--muted) }
 .tr + .tr { padding-top: 10px; border-top: 1px dashed var(--rule) }
 .nav2 { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap }
 .nav2 a { text-decoration: none; color: var(--lapis); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; background: var(--leaf) }
@@ -213,7 +214,11 @@ const TRANSLATIONS = [
   { id: "theophanov", name: "Цветан Теофанов", file: "data/bg-theophanov.json",
     note: "Превод на смисъла, 1997 г. Текст по Tanzil.net." },
   { id: "dobrev", name: "Иван Добрев", file: "data/bg-dobrev.json", flags: "data/bg-dobrev-flags.json",
-    note: "„Свещеният Коран – съдържание на български език“, проф. д-р Иван Добрев. Текстът е разпознат автоматично от сканираното издание и още не е проверен." }
+    note: "„Свещеният Коран – съдържание на български език“, проф. д-р Иван Добрев. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
+  { id: "gendzhev", name: "Недим Генджев (ръководител)", file: "data/bg-gendzhev.json", flags: "data/bg-gendzhev-flags.json",
+    note: "„Свещен Коран и неговият превод на български език“, ръководител Недим Генджев. Текстът е разпознат автоматично от сканираното издание и още не е проверен. Аяти 2:260–264 липсват в сканираното копие." },
+  { id: "hayraddin", name: "Али Хайраддин", file: "data/bg-hayraddin.json",
+    note: "„Прещедрият Коран“, превод на Али Хайраддин." }
 ];
 const FLAGS = {};
 
@@ -296,7 +301,7 @@ function renderSurah(no, verse, keepScroll) {
     const juz = JUZ.get(key), sj = SAJ.has(key);
     h += `<article class="ayah" id="s${no}-${v}"><div class="atop"><div class="ref"><span>${no}:${v}</span>${juz ? `<span>· Джуз ${juz}</span>` : ""}${sj ? `<span class="sj">· Сажда</span>` : ""}</div><button class="copy" data-copy="${no}:${v}">Копирай</button></div>`;
     if (S.showAr) h += `<p class="ar-t" lang="ar">${a} <span class="num">﴿${AR_NUM(v)}﴾</span></p>`;
-    trs.forEach(t => { const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}<p lang="bg">${esc(TR[t.id][no - 1][i])}</p></div>` });
+    trs.forEach(t => { const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}${TR[t.id][no - 1][i] ? `<p lang="bg">${esc(TR[t.id][no - 1][i])}</p>` : `<p class="gap">Този аят липсва в източника.</p>`}</div>` });
     h += `</article>`;
   });
   h += `<nav class="nav2">${no > 1 ? `<a href="#s${no - 1}">← ${no - 1}. ${NAMES[no - 2][0]}</a>` : "<span></span>"}${no < 114 ? `<a href="#s${no + 1}">${no + 1}. ${NAMES[no][0]} →</a>` : ""}</nav>`;
