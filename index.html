@@ -216,11 +216,13 @@ const TRANSLATIONS = [
   { id: "dobrev", name: "Иван Добрев", file: "data/bg-dobrev.json", flags: "data/bg-dobrev-flags.json",
     note: "„Свещеният Коран – съдържание на български език“, проф. д-р Иван Добрев. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
   { id: "gendzhev", name: "Недим Генджев (ръководител)", file: "data/bg-gendzhev.json", flags: "data/bg-gendzhev-flags.json",
-    note: "„Свещен Коран и неговият превод на български език“, ръководител Недим Генджев. Текстът е разпознат автоматично от сканираното издание и още не е проверен. Аяти 2:260–264 липсват в сканираното копие." },
+    note: "„Свещен Коран и неговият превод на български език“, ръководител Недим Генджев. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
   { id: "hayraddin", name: "Али Хайраддин", file: "data/bg-hayraddin.json",
     note: "„Прещедрият Коран“, превод на Али Хайраддин." },
   { id: "ahmadiyya", name: "Ахмадия", file: "data/bg-ahmadiyya.json", flags: "data/bg-ahmadiyya-flags.json",
-    note: "„Свещеният Коран – арабски текст с български превод“, издание на общността Ахмадия. В изданието басмалата е аят 1 на всяка сура, затова номерата там са с един по-големи. Тук са приведени към общата номерация. Текстът е разпознат автоматично от сканираното издание и още не е проверен." }
+    note: "„Свещеният Коран – арабски текст с български превод“, издание на общността Ахмадия. В изданието басмалата е аят 1 на всяка сура, затова номерата там са с един по-големи. Тук са приведени към общата номерация. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
+  { id: "hope", name: "Ернст Макс Хопе", file: "data/bg-hope.json", flags: "data/bg-hope-flags.json", old: true,
+    note: "„Коранътъ – Водительтъ и разпознавачътъ“, Ернст Макс Хопе. Текстът е в стария правопис с ѣ, ѫ и крайни ъ и ь. Разпознат е автоматично от сканираното издание и не е проверен. В книгата аятите не са номерирани, затова разделянето по аяти е приблизително." }
 ];
 const FLAGS = {};
 
@@ -367,6 +369,9 @@ let scope = "all", sTimer;
 $("#scope").onclick = e => { const b = e.target.closest("button"); if (!b) return; scope = b.dataset.v; document.querySelectorAll("#scope button").forEach(x => x.setAttribute("aria-pressed", x === b)); runSearch() };
 $("#q").addEventListener("input", () => { clearTimeout(sTimer); sTimer = setTimeout(runSearch, 180) });
 let AR_N = null;
+const TRN = {};
+// Search matches old orthography too: ѣ→е, ѫ→ъ, я→е, word-final ъ/ь dropped.
+const normBg = s => s.toLowerCase().replace(/ѣ/g, "е").replace(/ѫ/g, "ъ").replace(/я/g, "е").replace(/[ъь](?=[^а-яё]|$)/g, "");
 function runSearch() {
   const raw = $("#q").value.trim(), out = $("#results"), info = $("#sinfo");
   if (!AR) return;
@@ -386,10 +391,11 @@ function runSearch() {
     const q = normAr(raw);
     AR_N.forEach((s, si) => s.forEach((a, vi) => { if (a.includes(q)) { total++; if (hits.length < 200) hits.push([si + 1, vi + 1, esc(AR[si][vi]), true]) } }));
   } else if (!isAr && scope !== "ar") {
-    const q = raw.toLowerCase();
+    const q = normBg(raw);
     const re = new RegExp(raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    for (const t of trs) if (!TRN[t.id]) TRN[t.id] = TR[t.id].map(s => s.map(normBg));
     for (let si = 0; si < 114; si++) for (let vi = 0; vi < AR[si].length; vi++) {
-      const t = trs.find(t => TR[t.id][si][vi].toLowerCase().includes(q));
+      const t = trs.find(t => TRN[t.id][si][vi].includes(q));
       if (t) { total++; if (hits.length < 200) hits.push([si + 1, vi + 1, esc(TR[t.id][si][vi]).replace(re, m => `<mark>${m}</mark>`), false]) }
     }
   }
