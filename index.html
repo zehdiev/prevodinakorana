@@ -218,7 +218,9 @@ const TRANSLATIONS = [
   { id: "gendzhev", name: "Недим Генджев (ръководител)", file: "data/bg-gendzhev.json", flags: "data/bg-gendzhev-flags.json",
     note: "„Свещен Коран и неговият превод на български език“, ръководител Недим Генджев. Текстът е разпознат автоматично от сканираното издание и още не е проверен. Аяти 2:260–264 липсват в сканираното копие." },
   { id: "hayraddin", name: "Али Хайраддин", file: "data/bg-hayraddin.json",
-    note: "„Прещедрият Коран“, превод на Али Хайраддин." }
+    note: "„Прещедрият Коран“, превод на Али Хайраддин." },
+  { id: "ahmadiyya", name: "Ахмадия", file: "data/bg-ahmadiyya.json", flags: "data/bg-ahmadiyya-flags.json",
+    note: "„Свещеният Коран – арабски текст с български превод“, издание на общността Ахмадия. В изданието басмалата е аят 1 на всяка сура, затова номерата там са с един по-големи. Тук са приведени към общата номерация. Текстът е разпознат автоматично от сканираното издание и още не е проверен." }
 ];
 const FLAGS = {};
 
@@ -301,7 +303,7 @@ function renderSurah(no, verse, keepScroll) {
     const juz = JUZ.get(key), sj = SAJ.has(key);
     h += `<article class="ayah" id="s${no}-${v}"><div class="atop"><div class="ref"><span>${no}:${v}</span>${juz ? `<span>· Джуз ${juz}</span>` : ""}${sj ? `<span class="sj">· Сажда</span>` : ""}</div><button class="copy" data-copy="${no}:${v}">Копирай</button></div>`;
     if (S.showAr) h += `<p class="ar-t" lang="ar">${a} <span class="num">﴿${AR_NUM(v)}﴾</span></p>`;
-    trs.forEach(t => { const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}${TR[t.id][no - 1][i] ? `<p lang="bg">${esc(TR[t.id][no - 1][i])}</p>` : `<p class="gap">Този аят липсва в източника.</p>`}</div>` });
+    trs.forEach(t => { const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}${TR[t.id][no - 1][i] ? `<p lang="bg">${esc(TR[t.id][no - 1][i])}</p>` : `<p class="gap">Текстът на този аят липсва в източника или не е разпознат (може да е слят със съседния аят).</p>`}</div>` });
     h += `</article>`;
   });
   h += `<nav class="nav2">${no > 1 ? `<a href="#s${no - 1}">← ${no - 1}. ${NAMES[no - 2][0]}</a>` : "<span></span>"}${no < 114 ? `<a href="#s${no + 1}">${no + 1}. ${NAMES[no][0]} →</a>` : ""}</nav>`;
