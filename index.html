@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Коранът на арабски с български преводи: навигация по сури и аяти, търсене и настройки за четене.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e4f74'/%3E%3Cpath d='M8 9c3-1 6-1 8 1 2-2 5-2 8-1v15c-3-1-6-1-8 1-2-2-5-2-8-1z' fill='none' stroke='%23f3e2a6' stroke-width='2'/%3E%3C/svg%3E">
+<meta name="description" content="Коранът на арабски с българските преводи и тълкувания.">
+<meta name="theme-color" content="#1e4f74">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Коранът">
 <style>html{-webkit-text-size-adjust:100%}body{margin:0;font-family:system-ui,sans-serif;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Коранът на български</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -135,6 +140,24 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 .about { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); display: grid; gap: 6px }
 .about a { color: var(--lapis) }
 .loading { text-align: center; color: var(--muted); padding: 60px 0; font-family: var(--f-read) }
+.edbtn { margin-left: auto; border: 1px solid var(--rule); background: var(--paper); color: var(--muted); border-radius: 6px; font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 500; padding: 1px 8px; font-family: var(--f-ui) }
+.edbtn:hover { color: var(--lapis); border-color: var(--lapis) }
+.edited { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--lapis); background: var(--lapis-soft); border-radius: 999px; padding: 0 7px; font-size: 11px }
+.edbox { display: grid; gap: 8px }
+.edbox textarea { width: 100%; min-height: 6em; font-family: var(--f-read); font-size: var(--tr-size); line-height: 1.55; padding: 10px 12px; border: 1px solid var(--lapis); border-radius: 8px; background: var(--leaf); resize: vertical }
+.edbox .orig { font-size: 13px; color: var(--muted) }
+.edrow { display: flex; gap: 8px; flex-wrap: wrap }
+.btn { border: 1px solid var(--rule); background: var(--leaf); border-radius: 8px; padding: 7px 14px; font-size: 14px }
+.btn.pri { background: var(--lapis); border-color: var(--lapis); color: var(--leaf) }
+.btn.warn { color: #a3361f; border-color: currentColor }
+.btn:disabled { opacity: .5; cursor: default }
+.tafsir .nedit { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 0 4px; text-decoration: underline; font-family: var(--f-ui) }
+.elist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.elist li { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; font-size: 13px; display: grid; gap: 2px }
+.elist a { color: var(--lapis); text-decoration: none; font-weight: 600 }
+.elist .et { font-family: var(--f-read); font-size: 14px; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
+.badge { background: var(--lapis); color: var(--leaf); border-radius: 999px; font-size: 11px; padding: 0 6px; font-variant-numeric: tabular-nums }
+.copybox { width: 100%; min-height: 8em; font-family: ui-monospace, monospace; font-size: 12px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px; background: var(--paper) }
 .toast { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 8px; font-size: 14px }
 
 @media (max-width: 860px) {
@@ -156,6 +179,8 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 <header class="bar">
   <button class="iconbtn" id="menuBtn" aria-label="Списък на сурите"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <div class="brand"><b>Коранът на български</b><span>القرآن الكريم</span></div>
+  <button class="iconbtn" id="installBtn" hidden aria-label="Инсталирай приложението"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="t">Инсталирай</span></button>
+  <button class="iconbtn" id="editBtn" aria-label="Редакции"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg><span class="t">Редакции</span> <span class="badge" id="editCount" hidden>0</span></button>
   <button class="iconbtn" id="searchBtn" aria-label="Търсене"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="t">Търсене</span></button>
   <button class="iconbtn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="t">Настройки</span></button>
 </header>
@@ -211,6 +236,37 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   </div>
 </aside>
 
+<aside class="panel" id="editPanel" hidden aria-label="Редакции">
+  <div class="phead"><h2>Редакции на текста</h2><button class="iconbtn" data-close aria-label="Затвори">✕</button></div>
+  <div class="pbody">
+    <div class="field">
+      <div class="hint">Текстовете от сканираните книги могат да се поправят с бутона „Редактирай“ до всеки превод и всяко тълкуване. Поправките се пазят само в този браузър. За да влязат в официалната версия, свалете файла с редакциите и го изпратете.</div>
+    </div>
+    <div class="field">
+      <label for="editorName">Вашето име (по желание, записва се във файла)</label>
+      <input class="sinput" id="editorName" type="text" autocomplete="name" placeholder="напр. Хасан">
+    </div>
+    <div class="field">
+      <span class="lbl" id="editSummary">Няма редакции</span>
+      <div class="edrow">
+        <button class="btn pri" id="exportBtn" disabled>Свали файла с редакциите</button>
+        <button class="btn" id="importBtn">Зареди файл</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+      <div id="copyWrap" hidden class="field">
+        <div class="hint">Свалянето не е разрешено тук. Копирайте текста по-долу и го запазете като файл с разширение .json или го изпратете направо.</div>
+        <textarea class="copybox" id="copyBox" readonly></textarea>
+        <button class="btn" id="copyAll">Копирай</button>
+      </div>
+    </div>
+    <ul class="elist" id="editList"></ul>
+    <div class="field" id="clearWrap" hidden>
+      <button class="btn warn" id="clearBtn">Изтрий всички редакции</button>
+      <div class="edrow" id="clearConfirm" hidden><span class="hint">Сигурни ли сте? Това не може да се върне.</span><button class="btn warn" id="clearYes">Да, изтрий</button><button class="btn" id="clearNo">Отказ</button></div>
+    </div>
+  </div>
+</aside>
+
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -218,19 +274,19 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 const TRANSLATIONS = [
   { id: "theophanov", name: "Цветан Теофанов", file: "data/bg-theophanov.json",
     note: "Превод на смисъла, 1997 г. Текст по Tanzil.net." },
-  { id: "dobrev", name: "Иван Добрев", file: "data/bg-dobrev.json", flags: "data/bg-dobrev-flags.json",
+  { id: "dobrev", ocr: true, name: "Иван Добрев", file: "data/bg-dobrev.json", flags: "data/bg-dobrev-flags.json",
     note: "„Свещеният Коран – съдържание на български език“, проф. д-р Иван Добрев. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
-  { id: "gendzhev", name: "Недим Генджев (ръководител)", file: "data/bg-gendzhev.json", flags: "data/bg-gendzhev-flags.json",
+  { id: "gendzhev", ocr: true, name: "Недим Генджев (ръководител)", file: "data/bg-gendzhev.json", flags: "data/bg-gendzhev-flags.json",
     note: "„Свещен Коран и неговият превод на български език“, ръководител Недим Генджев. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
   { id: "hayraddin", name: "Али Хайраддин", file: "data/bg-hayraddin.json",
     note: "„Прещедрият Коран“, превод на Али Хайраддин." },
-  { id: "ahmadiyya", name: "Ахмадия", file: "data/bg-ahmadiyya.json", flags: "data/bg-ahmadiyya-flags.json",
+  { id: "ahmadiyya", ocr: true, name: "Ахмадия", file: "data/bg-ahmadiyya.json", flags: "data/bg-ahmadiyya-flags.json",
     note: "„Свещеният Коран – арабски текст с български превод“, издание на общността Ахмадия. В изданието басмалата е аят 1 на всяка сура, затова номерата там са с един по-големи. Тук са приведени към общата номерация. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
-  { id: "hope", name: "Ернст Макс Хопе", file: "data/bg-hope.json", flags: "data/bg-hope-flags.json", old: true,
+  { id: "hope", ocr: true, name: "Ернст Макс Хопе", file: "data/bg-hope.json", flags: "data/bg-hope-flags.json", old: true,
     note: "„Коранътъ – Водительтъ и разпознавачътъ“, Ернст Макс Хопе. Текстът е в стария правопис с ѣ, ѫ и крайни ъ и ь. Разпознат е автоматично от сканираното издание и не е проверен. В книгата аятите не са номерирани, затова разделянето по аяти е приблизително." },
-  { id: "tafsirtext", name: "Тълкувания – превод", file: "data/bg-tafsir-text.json", partial: true,
+  { id: "tafsirtext", ocr: true, name: "Тълкувания – превод", file: "data/bg-tafsir-text.json", partial: true,
     note: "Преводът на аятите от книгата „Тълкувания на Корана в спор с Християнската и Еврейската религия“. Книгата обхваща само сури 1–7. Текстът е разпознат автоматично и не е проверен." },
-  { id: "shemsuddin", name: "Мохаммед Шемсуддин", file: "data/bg-shemsuddin.json", flags: "data/bg-shemsuddin-flags.json",
+  { id: "shemsuddin", ocr: true, name: "Мохаммед Шемсуддин", file: "data/bg-shemsuddin.json", flags: "data/bg-shemsuddin-flags.json",
     note: "„Корани Керим – Почтения Коран“, превод на шейх Мохаммед Шемсуддин. Изданието е машинописно и сканирането е бледо, затова автоматично разпознатият текст има много грешки (около половината аяти са отбелязани за проверка). Текстът не е проверен." },
 ];
 const FLAGS = {};
@@ -269,7 +325,9 @@ const S = Object.assign({ showAr: true, showTafsir: true, tr: TRANSLATIONS.map(t
 // translations added after a viewer's last visit are switched on for them
 S.known = S.known || S.tr.slice();
 TRANSLATIONS.forEach(t => { if (!S.known.includes(t.id)) { S.known.push(t.id); if (!S.tr.includes(t.id)) S.tr.push(t.id) } });
-const TAFSIR = {};
+const TAFSIR = {}, TSEC = {};
+let EDITS = store.get("edits", {});
+const saveEdits = () => store.set("edits", EDITS);
 const save = () => store.set("settings", S);
 
 let AR = null, TR = {}, META = null, SAJ = new Set(), JUZ = new Map(), current = 0;
@@ -319,9 +377,15 @@ function renderSurah(no, verse, keepScroll) {
     const juz = JUZ.get(key), sj = SAJ.has(key);
     h += `<article class="ayah" id="s${no}-${v}"><div class="atop"><div class="ref"><span>${no}:${v}</span>${juz ? `<span>· Джуз ${juz}</span>` : ""}${sj ? `<span class="sj">· Сажда</span>` : ""}</div><button class="copy" data-copy="${no}:${v}">Копирай</button></div>`;
     if (S.showAr) h += `<p class="ar-t" lang="ar">${a} <span class="num">﴿${AR_NUM(v)}﴾</span></p>`;
-    trs.forEach(t => { if (t.partial && !TR[t.id][no - 1][i]) return; const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}${TR[t.id][no - 1][i] ? `<p lang="bg">${esc(TR[t.id][no - 1][i])}</p>` : t.partial ? "" : `<p class="gap">Текстът на този аят липсва в източника или не е разпознат (може да е слят със съседния аят).</p>`}</div>` });
+    trs.forEach(t => {
+      const txt = TR[t.id][no - 1][i];
+      if (t.partial && !txt) return;
+      const fl = FLAGS[t.id] && FLAGS[t.id].has(key), ek = t.id + "|" + key, ed = EDITS[ek];
+      const showWho = trs.length > 1 || fl || t.ocr;
+      h += `<div class="tr" data-ek="${ek}">${showWho ? `<span class="who">${esc(t.name)}${ed ? ` <span class="edited">редактирано</span>` : fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}${t.ocr ? `<button class="edbtn" data-edit="${ek}">Редактирай</button>` : ""}</span>` : ""}${txt ? `<p lang="bg">${esc(txt)}</p>` : t.partial ? "" : `<p class="gap">Текстът на този аят липсва в източника или не е разпознат (може да е слят със съседния аят).</p>`}</div>`;
+    });
     if (S.showTafsir && TAFSIR[key]) TAFSIR[key].forEach(sec => {
-      h += `<details class="tafsir"><summary>Тълкуване към ${sec.s}:${sec.a}${sec.b > sec.a ? "–" + sec.b : ""}</summary>${sec.notes.map(n => `<p>${esc(n)}</p>`).join("")}<p class="tsrc">Източник: „Тълкувания на Корана в спор с Християнската и Еврейската религия“. Текстът е разпознат автоматично от сканираното издание и не е проверен.</p></details>`;
+      h += `<details class="tafsir"><summary>Тълкуване към ${sec.s}:${sec.a}${sec.b > sec.a ? "–" + sec.b : ""}</summary>${sec.notes.map((n, ni) => { const ek = `tafsir|${sec.s}:${sec.a}-${sec.b}|${ni}`; return `<div class="tnote" data-ek="${ek}"><p>${esc(n)}${EDITS[ek] ? ` <span class="edited">редактирано</span>` : ""} <button class="nedit" data-edit="${ek}">Редактирай</button></p></div>` }).join("")}<p class="tsrc">Източник: „Тълкувания на Корана в спор с Християнската и Еврейската религия“. Текстът е разпознат автоматично от сканираното издание и не е проверен.</p></details>`;
     });
     h += `</article>`;
   });
@@ -347,7 +411,7 @@ function route() {
 
 /* panels */
 function openPanel(id) { closeAll(); $(id).hidden = false; $("#scrim").hidden = false; const i = $(id).querySelector("input"); if (i) setTimeout(() => i.focus(), 30) }
-function closeAll() { ["#searchPanel", "#setPanel"].forEach(p => $(p).hidden = true); $("#rail").classList.remove("open"); $("#scrim").hidden = true }
+function closeAll() { ["#searchPanel", "#setPanel", "#editPanel"].forEach(p => $(p).hidden = true); $("#rail").classList.remove("open"); $("#scrim").hidden = true }
 $("#searchBtn").onclick = () => openPanel("#searchPanel");
 $("#setBtn").onclick = () => openPanel("#setPanel");
 $("#menuBtn").onclick = () => { closeAll(); $("#rail").classList.add("open"); $("#scrim").hidden = false };
@@ -425,14 +489,111 @@ const firstTr = (s, v) => { const t = TRANSLATIONS.find(t => TR[t.id]); return t
 const item = (s, v, html, ar) => `<li><a href="#s${s}-${v}"><div class="rref">${s}:${v} · ${NAMES[s - 1][0]}</div><div class="rtx${ar ? " a" : ""}">${html}</div></a></li>`;
 $("#results").addEventListener("click", e => { const a = e.target.closest("a"); if (a && location.hash === a.getAttribute("href")) { e.preventDefault(); route() } });
 
+/* editing of scanned texts */
+function getText(ek) {
+  const [src, ref, ni] = ek.split("|");
+  if (src === "tafsir") { const sec = TSEC[ref]; return sec ? sec.notes[+ni] : null }
+  const [s, v] = ref.split(":").map(Number);
+  return TR[src] ? TR[src][s - 1][v - 1] : null;
+}
+function setText(ek, txt) {
+  const [src, ref, ni] = ek.split("|");
+  if (src === "tafsir") { const sec = TSEC[ref]; if (sec) sec.notes[+ni] = txt; return }
+  const [s, v] = ref.split(":").map(Number);
+  if (TR[src]) { TR[src][s - 1][v - 1] = txt; delete TRN[src] }
+}
+const srcName = id => id === "tafsir" ? "Тълкувания (бележки)" : (TRANSLATIONS.find(t => t.id === id) || { name: id }).name;
+$("#view").addEventListener("click", e => {
+  const b = e.target.closest("[data-edit]"); if (!b) return;
+  openEditor(b.dataset.edit);
+});
+function openEditor(ek) {
+  const host = document.querySelector(`[data-ek="${CSS.escape(ek)}"]`); if (!host || host.querySelector(".edbox")) return;
+  const cur = getText(ek) || "", e = EDITS[ek];
+  const box = document.createElement("div"); box.className = "edbox";
+  box.innerHTML = `<textarea aria-label="Текст за редакция"></textarea>
+    ${e ? `<div class="orig">Оригинал от сканирането: ${esc(e.o || "(празно)")}</div>` : ""}
+    <div class="edrow"><button class="btn pri" data-a="save">Запази</button><button class="btn" data-a="cancel">Отказ</button>${e ? `<button class="btn warn" data-a="revert">Върни оригинала</button>` : ""}</div>`;
+  const ta = box.querySelector("textarea"); ta.value = cur;
+  const p = host.querySelector(":scope > p, :scope > .gap"); if (p) p.hidden = true;
+  host.appendChild(box); ta.focus(); ta.style.height = Math.max(ta.scrollHeight + 4, 96) + "px";
+  box.addEventListener("click", ev => {
+    const a = ev.target.closest("[data-a]"); if (!a) return;
+    if (a.dataset.a === "cancel") { box.remove(); if (p) p.hidden = false; return }
+    if (a.dataset.a === "revert") { setText(ek, e.o); delete EDITS[ek]; saveEdits(); updateEditUI(); renderSurah(current, null, true); toast("Върнат е оригиналният текст"); return }
+    const nt = ta.value.replace(/\s+/g, " ").trim();
+    const orig = e ? e.o : cur;
+    if (nt === orig) { delete EDITS[ek] } else { EDITS[ek] = { o: orig, t: nt, at: new Date().toISOString() } }
+    setText(ek, nt); saveEdits(); updateEditUI(); renderSurah(current, null, true); toast("Редакцията е запазена в този браузър");
+  });
+  ta.addEventListener("keydown", ev => { if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) box.querySelector('[data-a="save"]').click(); if (ev.key === "Escape") box.querySelector('[data-a="cancel"]').click() });
+}
+function updateEditUI() {
+  const keys = Object.keys(EDITS).sort((a, b) => (EDITS[b].at || "").localeCompare(EDITS[a].at || ""));
+  const n = keys.length;
+  $("#editCount").hidden = !n; $("#editCount").textContent = n;
+  $("#editSummary").textContent = n ? `Редакции в този браузър: ${n}` : "Няма редакции";
+  $("#exportBtn").disabled = !n; $("#clearWrap").hidden = !n;
+  $("#editList").innerHTML = keys.map(k => { const [src, ref, ni] = k.split("|"); const s = ref.split(":")[0], v = ref.split(":")[1].split("-")[0];
+    return `<li><a href="#s${s}-${v}">${esc(ref)}${ni != null ? ", бележка " + (+ni + 1) : ""}</a><span class="hint">${esc(srcName(src))}</span><span class="et">${esc(EDITS[k].t || "(празно)")}</span></li>` }).join("");
+}
+function exportData() {
+  const edits = Object.keys(EDITS).map(k => { const [src, ref, ni] = k.split("|"); const e = EDITS[k];
+    return Object.assign({ source: src, ref }, ni != null ? { note: +ni + 1 } : {}, { original: e.o, text: e.t, edited: e.at }) });
+  return JSON.stringify({ format: "quran-bg-edits", version: 1, exported: new Date().toISOString(), editor: S.editor || "", count: edits.length, edits }, null, 2);
+}
+$("#editBtn").onclick = () => { openPanel("#editPanel"); $("#copyWrap").hidden = true };
+$("#editorName").value = S.editor || "";
+$("#editorName").oninput = e => { S.editor = e.target.value.trim(); save() };
+$("#exportBtn").onclick = async () => {
+  const data = exportData(), d = new Date(), name = `redakcii-koran-${d.toISOString().slice(0, 10)}.json`;
+  let done = false;
+  try {
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) { await dl.save({ filename: name, data: new Blob([data], { type: "application/json" }) }); done = true }
+  } catch (err) { if (err && /declin|cancel|abort/i.test(err.code || err.message || "")) { toast("Свалянето е отказано"); return } }
+  if (!done && !(window.claude && window.claude.use)) {
+    try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); done = true } catch {}
+  }
+  if (done) toast("Файлът с редакциите е свален");
+  else { $("#copyWrap").hidden = false; $("#copyBox").value = data; $("#copyBox").select() }
+};
+$("#copyAll").onclick = () => { const t = $("#copyBox"); navigator.clipboard.writeText(t.value).then(() => toast("Копирано"), () => { t.select(); toast("Текстът е маркиран – копирайте го ръчно") }) };
+$("#importBtn").onclick = () => $("#importFile").click();
+$("#importFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (d.format !== "quran-bg-edits" || !Array.isArray(d.edits)) throw new Error("format");
+    let n = 0;
+    d.edits.forEach(x => { const ek = x.source + "|" + x.ref + (x.note ? "|" + (x.note - 1) : ""); if (typeof x.text !== "string") return;
+      const cur = EDITS[ek]; EDITS[ek] = { o: cur ? cur.o : (x.original ?? getText(ek) ?? ""), t: x.text, at: x.edited || new Date().toISOString() }; setText(ek, x.text); n++ });
+    saveEdits(); updateEditUI(); renderSurah(current, null, true); toast(`Заредени редакции: ${n}`);
+  } catch { toast("Файлът не е файл с редакции от това приложение") }
+  e.target.value = "";
+};
+$("#clearBtn").onclick = () => { $("#clearConfirm").hidden = false; $("#clearBtn").hidden = true };
+$("#clearNo").onclick = () => { $("#clearConfirm").hidden = true; $("#clearBtn").hidden = false };
+$("#clearYes").onclick = () => { Object.keys(EDITS).forEach(k => setText(k, EDITS[k].o)); EDITS = {}; saveEdits(); updateEditUI(); renderSurah(current, null, true); $("#clearNo").click(); toast("Редакциите са изтрити") };
+
+/* installable app (works in the standalone site; the service worker is not available inside claude.ai) */
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("#installBtn").hidden = false });
+$("#installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice.catch(() => null); installEvt = null; $("#installBtn").hidden = true };
+if ("serviceWorker" in navigator && document.querySelector('link[rel="manifest"]')) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => null));
+}
+
 /* boot */
 applySettings(); buildTrChecks(); buildList();
 Promise.all([fetch("data/meta.json").then(r => r.json()), fetch("data/ar.json").then(r => r.json()),
   ...TRANSLATIONS.map(t => fetch(t.file).then(r => r.json()).then(d => TR[t.id] = d).catch(() => null)),
   ...TRANSLATIONS.filter(t => t.flags).map(t => fetch(t.flags).then(r => r.json()).then(l => FLAGS[t.id] = new Set(l)).catch(() => null)),
-  fetch("data/tafsir.json").then(r => r.json()).then(d => d.sections.forEach(sec => { const k = sec.s + ":" + sec.b; (TAFSIR[k] = TAFSIR[k] || []).push(sec) })).catch(() => null)])
+  fetch("data/tafsir.json").then(r => r.json()).then(d => d.sections.forEach(sec => { const k = sec.s + ":" + sec.b; (TAFSIR[k] = TAFSIR[k] || []).push(sec); TSEC[sec.s + ":" + sec.a + "-" + sec.b] = sec })).catch(() => null)])
 .then(([meta, ar]) => {
   META = meta; AR = ar;
+  Object.keys(EDITS).forEach(k => setText(k, EDITS[k].t));
+  updateEditUI();
   meta.sajda.forEach(([s, v]) => SAJ.add(s + ":" + v));
   meta.juz.forEach(([s, v, j]) => JUZ.set(s + ":" + v, j));
   buildList($("#filter").value); route();
