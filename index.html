@@ -158,6 +158,12 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 .elist .et { font-family: var(--f-read); font-size: 14px; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
 .badge { background: var(--lapis); color: var(--leaf); border-radius: 999px; font-size: 11px; padding: 0 6px; font-variant-numeric: tabular-nums }
 .copybox { width: 100%; min-height: 8em; font-family: ui-monospace, monospace; font-size: 12px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px; background: var(--paper) }
+.ebar { position: fixed; z-index: 12; left: 0; right: 0; bottom: 0; background: var(--leaf); border-top: 1px solid var(--rule); box-shadow: 0 -6px 20px rgb(0 0 0 / .08);
+  padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; font-size: 14px }
+.ebar b { font-variant-numeric: tabular-nums }
+body.has-ebar main { padding-bottom: 96px }
+body.has-ebar .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)) }
 .toast { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 8px; font-size: 14px }
 
 @media (max-width: 860px) {
@@ -167,6 +173,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   .rail.open { transform: none }
   .brand span { display: none }
   .iconbtn .t { display: none }
+  #editBtn .t { display: inline }
   .shead .arn { font-size: 36px }
   .shead h1 { font-size: 25px }
 }
@@ -229,6 +236,12 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       <label for="trSize">Размер на превода</label>
       <div class="row"><input type="range" id="trSize" min="14" max="28" step="1" value="18"><output id="trOut">18</output></div>
     </div>
+    <div class="field" id="appField" hidden>
+      <span class="lbl">Приложение</span>
+      <div class="hint" id="appState"></div>
+      <button class="btn pri" id="installBtn2" hidden>Инсталирай приложението</button>
+      <div class="hint" id="appHow"></div>
+    </div>
     <div class="field">
       <span class="lbl">Тема</span>
       <div class="seg" id="theme"><button data-v="auto" aria-pressed="true">Като системата</button><button data-v="light" aria-pressed="false">Светла</button><button data-v="dark" aria-pressed="false">Тъмна</button></div>
@@ -266,6 +279,8 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     </div>
   </div>
 </aside>
+
+<div class="ebar" id="ebar" hidden role="region" aria-label="Редакции"><span>Редакции в този браузър: <b id="ebarN">0</b></span><button class="btn pri" id="ebarDl">Свали файла с редакциите</button><button class="btn" id="ebarOpen">Преглед</button></div>
 
 <div class="toast" id="toast" hidden></div>
 
@@ -532,7 +547,8 @@ function updateEditUI() {
   const keys = Object.keys(EDITS).sort((a, b) => (EDITS[b].at || "").localeCompare(EDITS[a].at || ""));
   const n = keys.length;
   $("#editCount").hidden = !n; $("#editCount").textContent = n;
-  $("#editSummary").textContent = n ? `Редакции в този браузър: ${n}` : "Няма редакции";
+  $("#editSummary").textContent = n ? `Редакции в този браузър: ${n}` : "Няма редакции. Натиснете „Редактирай“ до текст от сканирана книга, поправете го и натиснете „Запази“. После свалете файла оттук.";
+  $("#ebar").hidden = !n; $("#ebarN").textContent = n; document.body.classList.toggle("has-ebar", !!n);
   $("#exportBtn").disabled = !n; $("#clearWrap").hidden = !n;
   $("#editList").innerHTML = keys.map(k => { const [src, ref, ni] = k.split("|"); const s = ref.split(":")[0], v = ref.split(":")[1].split("-")[0];
     return `<li><a href="#s${s}-${v}">${esc(ref)}${ni != null ? ", бележка " + (+ni + 1) : ""}</a><span class="hint">${esc(srcName(src))}</span><span class="et">${esc(EDITS[k].t || "(празно)")}</span></li>` }).join("");
@@ -558,6 +574,8 @@ $("#exportBtn").onclick = async () => {
   if (done) toast("Файлът с редакциите е свален");
   else { $("#copyWrap").hidden = false; $("#copyBox").value = data; $("#copyBox").select() }
 };
+$("#ebarDl").onclick = () => { openPanel("#editPanel"); $("#exportBtn").click() };
+$("#ebarOpen").onclick = () => { openPanel("#editPanel"); $("#copyWrap").hidden = true };
 $("#copyAll").onclick = () => { const t = $("#copyBox"); navigator.clipboard.writeText(t.value).then(() => toast("Копирано"), () => { t.select(); toast("Текстът е маркиран – копирайте го ръчно") }) };
 $("#importBtn").onclick = () => $("#importFile").click();
 $("#importFile").onchange = async e => {
@@ -578,11 +596,31 @@ $("#clearYes").onclick = () => { Object.keys(EDITS).forEach(k => setText(k, EDIT
 
 /* installable app (works in the standalone site; the service worker is not available inside claude.ai) */
 let installEvt = null;
-window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("#installBtn").hidden = false });
-$("#installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice.catch(() => null); installEvt = null; $("#installBtn").hidden = true };
-if ("serviceWorker" in navigator && document.querySelector('link[rel="manifest"]')) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => null));
+const isPWA = !!document.querySelector('link[rel="manifest"]');
+const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function updateInstallUI() {
+  $("#appField").hidden = !isPWA;
+  if (!isPWA) return;
+  $("#installBtn").hidden = !installEvt || standalone();
+  $("#installBtn2").hidden = !installEvt || standalone();
+  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  $("#appState").textContent = standalone() ? "Приложението е инсталирано и работи и без интернет." :
+    (navigator.serviceWorker && navigator.serviceWorker.controller ? "Текстовете са запазени за работа без интернет." : "Текстовете се запазват за работа без интернет…");
+  $("#appHow").innerHTML = standalone() ? "" : installEvt ? "Или от иконата за инсталиране в адресната лента на браузъра." :
+    ios ? "На iPhone и iPad: отворете сайта в Safari, натиснете бутона „Сподели“ и изберете „Добави към началния екран“." :
+    /Android/.test(ua) ? "На Android: в Chrome отворете менюто ⋮ и изберете „Инсталиране на приложението“ или „Добавяне към началния екран“." :
+    /Firefox/.test(ua) ? "Firefox на компютър не инсталира уеб приложения. Отворете сайта в Chrome или Edge и използвайте бутона „Инсталирай“." :
+    "В Chrome или Edge: иконата за инсталиране в дясната част на адресната лента или менюто ⋮ → „Инсталиране…“. Ако бутонът не се появи, презаредете страницата веднъж.";
 }
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; updateInstallUI() });
+window.addEventListener("appinstalled", () => { installEvt = null; updateInstallUI(); toast("Приложението е инсталирано") });
+async function doInstall() { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice.catch(() => null); installEvt = null; updateInstallUI() }
+$("#installBtn").onclick = doInstall; $("#installBtn2").onclick = doInstall;
+if ("serviceWorker" in navigator && isPWA) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).then(updateInstallUI).catch(() => null));
+}
+if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("controllerchange", updateInstallUI);
+updateInstallUI();
 
 /* boot */
 applySettings(); buildTrChecks(); buildList();

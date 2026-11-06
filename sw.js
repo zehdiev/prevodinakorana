@@ -1,5 +1,5 @@
 // Offline support: everything the app needs is cached on first visit.
-const VERSION = "quran-bg-f0f92095cb";
+const VERSION = "quran-bg-c6fb9f4d4c";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "data/ar.json", "data/bg-ahmadiyya-flags.json", "data/bg-ahmadiyya.json", "data/bg-dobrev-flags.json", "data/bg-dobrev.json", "data/bg-gendzhev-flags.json", "data/bg-gendzhev.json", "data/bg-hayraddin.json", "data/bg-hope-flags.json", "data/bg-hope.json", "data/bg-shemsuddin-flags.json", "data/bg-shemsuddin.json", "data/bg-tafsir-text.json", "data/bg-theophanov.json", "data/meta.json", "data/tafsir.json"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
