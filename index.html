@@ -95,6 +95,10 @@ main { min-width: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); pa
 .tr p { font-family: var(--f-read); font-size: var(--tr-size); line-height: 1.65; margin: 0; max-width: 68ch }
 .tr .who { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--lapis); font-weight: 600; display: flex; gap: 8px; align-items: center }
 .tr .flag { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--gilt); border: 1px solid currentColor; border-radius: 999px; padding: 0 7px; font-size: 11px; cursor: help }
+.tafsir { border: 1px solid var(--rule); border-radius: 10px; background: var(--leaf); padding: 0 14px }
+.tafsir summary { cursor: pointer; padding: 10px 0; font-size: 13px; font-weight: 600; color: var(--gilt); letter-spacing: .02em }
+.tafsir p { font-family: var(--f-read); font-size: calc(var(--tr-size) * .88); line-height: 1.6; margin: 0 0 10px; max-width: 70ch }
+.tafsir .tsrc { font-family: var(--f-ui); font-size: 12px; color: var(--muted) }
 .tr .gap { font-family: var(--f-ui); font-size: 14px; font-style: italic; color: var(--muted) }
 .tr + .tr { padding-top: 10px; border-top: 1px dashed var(--rule) }
 .nav2 { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; flex-wrap: wrap }
@@ -189,6 +193,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       <span class="lbl">Показване</span>
       <label class="check"><input type="checkbox" id="showAr" checked><span>Арабски текст</span></label>
       <div id="trChecks" style="display:grid;gap:8px"></div>
+      <label class="check"><input type="checkbox" id="showTafsir" checked><span>Тълкувания<small>Бележки от книгата „Тълкувания на Корана в спор с Християнската и Еврейската религия“ (сури 1–7)</small></span></label>
     </div>
     <div class="field">
       <label for="arSize">Размер на арабския шрифт</label>
@@ -223,6 +228,8 @@ const TRANSLATIONS = [
     note: "„Свещеният Коран – арабски текст с български превод“, издание на общността Ахмадия. В изданието басмалата е аят 1 на всяка сура, затова номерата там са с един по-големи. Тук са приведени към общата номерация. Текстът е разпознат автоматично от сканираното издание и още не е проверен." },
   { id: "hope", name: "Ернст Макс Хопе", file: "data/bg-hope.json", flags: "data/bg-hope-flags.json", old: true,
     note: "„Коранътъ – Водительтъ и разпознавачътъ“, Ернст Макс Хопе. Текстът е в стария правопис с ѣ, ѫ и крайни ъ и ь. Разпознат е автоматично от сканираното издание и не е проверен. В книгата аятите не са номерирани, затова разделянето по аяти е приблизително." },
+  { id: "tafsirtext", name: "Тълкувания – превод", file: "data/bg-tafsir-text.json", partial: true,
+    note: "Преводът на аятите от книгата „Тълкувания на Корана в спор с Християнската и Еврейската религия“. Книгата обхваща само сури 1–7. Текстът е разпознат автоматично и не е проверен." },
   { id: "shemsuddin", name: "Мохаммед Шемсуддин", file: "data/bg-shemsuddin.json", flags: "data/bg-shemsuddin-flags.json",
     note: "„Корани Керим – Почтения Коран“, превод на шейх Мохаммед Шемсуддин. Изданието е машинописно и сканирането е бледо, затова автоматично разпознатият текст има много грешки (около половината аяти са отбелязани за проверка). Текстът не е проверен." },
 ];
@@ -258,7 +265,11 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem("qbg:" + k); return v == null ? d : JSON.parse(v) } catch { return d } },
   set(k, v) { try { localStorage.setItem("qbg:" + k, JSON.stringify(v)) } catch {} }
 };
-const S = Object.assign({ showAr: true, tr: TRANSLATIONS.map(t => t.id), arSize: 30, trSize: 18, theme: "auto", last: 1 }, store.get("settings", {}));
+const S = Object.assign({ showAr: true, showTafsir: true, tr: TRANSLATIONS.map(t => t.id), arSize: 30, trSize: 18, theme: "auto", last: 1 }, store.get("settings", {}));
+// translations added after a viewer's last visit are switched on for them
+S.known = S.known || S.tr.slice();
+TRANSLATIONS.forEach(t => { if (!S.known.includes(t.id)) { S.known.push(t.id); if (!S.tr.includes(t.id)) S.tr.push(t.id) } });
+const TAFSIR = {};
 const save = () => store.set("settings", S);
 
 let AR = null, TR = {}, META = null, SAJ = new Set(), JUZ = new Map(), current = 0;
@@ -273,6 +284,7 @@ function applySettings() {
   $("#arSize").value = S.arSize; $("#arOut").textContent = S.arSize;
   $("#trSize").value = S.trSize; $("#trOut").textContent = S.trSize;
   $("#showAr").checked = S.showAr;
+  $("#showTafsir").checked = S.showTafsir;
   if (S.theme === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", S.theme);
   document.querySelectorAll("#theme button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.theme));
 }
@@ -307,7 +319,10 @@ function renderSurah(no, verse, keepScroll) {
     const juz = JUZ.get(key), sj = SAJ.has(key);
     h += `<article class="ayah" id="s${no}-${v}"><div class="atop"><div class="ref"><span>${no}:${v}</span>${juz ? `<span>· Джуз ${juz}</span>` : ""}${sj ? `<span class="sj">· Сажда</span>` : ""}</div><button class="copy" data-copy="${no}:${v}">Копирай</button></div>`;
     if (S.showAr) h += `<p class="ar-t" lang="ar">${a} <span class="num">﴿${AR_NUM(v)}﴾</span></p>`;
-    trs.forEach(t => { const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}${TR[t.id][no - 1][i] ? `<p lang="bg">${esc(TR[t.id][no - 1][i])}</p>` : `<p class="gap">Текстът на този аят липсва в източника или не е разпознат (може да е слят със съседния аят).</p>`}</div>` });
+    trs.forEach(t => { if (t.partial && !TR[t.id][no - 1][i]) return; const fl = FLAGS[t.id] && FLAGS[t.id].has(key); h += `<div class="tr">${trs.length > 1 || fl ? `<span class="who">${esc(t.name)}${fl ? ` <span class="flag" title="Текстът е разпознат автоматично и може да има грешка. Сверете с книгата.">за проверка</span>` : ""}</span>` : ""}${TR[t.id][no - 1][i] ? `<p lang="bg">${esc(TR[t.id][no - 1][i])}</p>` : t.partial ? "" : `<p class="gap">Текстът на този аят липсва в източника или не е разпознат (може да е слят със съседния аят).</p>`}</div>` });
+    if (S.showTafsir && TAFSIR[key]) TAFSIR[key].forEach(sec => {
+      h += `<details class="tafsir"><summary>Тълкуване към ${sec.s}:${sec.a}${sec.b > sec.a ? "–" + sec.b : ""}</summary>${sec.notes.map(n => `<p>${esc(n)}</p>`).join("")}<p class="tsrc">Източник: „Тълкувания на Корана в спор с Християнската и Еврейската религия“. Текстът е разпознат автоматично от сканираното издание и не е проверен.</p></details>`;
+    });
     h += `</article>`;
   });
   h += `<nav class="nav2">${no > 1 ? `<a href="#s${no - 1}">← ${no - 1}. ${NAMES[no - 2][0]}</a>` : "<span></span>"}${no < 114 ? `<a href="#s${no + 1}">${no + 1}. ${NAMES[no][0]} →</a>` : ""}</nav>`;
@@ -349,6 +364,7 @@ $("#slist").addEventListener("click", e => { const a = e.target.closest("a"); if
 $("#arSize").oninput = e => { S.arSize = +e.target.value; save(); applySettings() };
 $("#trSize").oninput = e => { S.trSize = +e.target.value; save(); applySettings() };
 $("#showAr").onchange = e => { S.showAr = e.target.checked; save(); renderSurah(current, null, true) };
+$("#showTafsir").onchange = e => { S.showTafsir = e.target.checked; save(); renderSurah(current, null, true) };
 $("#theme").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.theme = b.dataset.v; save(); applySettings() };
 
 /* copy */
@@ -413,7 +429,8 @@ $("#results").addEventListener("click", e => { const a = e.target.closest("a"); 
 applySettings(); buildTrChecks(); buildList();
 Promise.all([fetch("data/meta.json").then(r => r.json()), fetch("data/ar.json").then(r => r.json()),
   ...TRANSLATIONS.map(t => fetch(t.file).then(r => r.json()).then(d => TR[t.id] = d).catch(() => null)),
-  ...TRANSLATIONS.filter(t => t.flags).map(t => fetch(t.flags).then(r => r.json()).then(l => FLAGS[t.id] = new Set(l)).catch(() => null))])
+  ...TRANSLATIONS.filter(t => t.flags).map(t => fetch(t.flags).then(r => r.json()).then(l => FLAGS[t.id] = new Set(l)).catch(() => null)),
+  fetch("data/tafsir.json").then(r => r.json()).then(d => d.sections.forEach(sec => { const k = sec.s + ":" + sec.b; (TAFSIR[k] = TAFSIR[k] || []).push(sec) })).catch(() => null)])
 .then(([meta, ar]) => {
   META = meta; AR = ar;
   meta.sajda.forEach(([s, v]) => SAJ.add(s + ":" + v));
